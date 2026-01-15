@@ -4,7 +4,7 @@ interface ItemFormProps {
   addItem: (name: string, count: number) => void;
 }
 
-function ItemForm() {
+function ItemForm({ addItem }: ItemFormProps) {
   const [itemName, setItemName] = useState("");
   const [amount, setAmount] = useState(0);
 
@@ -30,7 +30,6 @@ function ItemForm() {
           >
             Item Name
           </label>
-          {/* TODO: Add value and onChange to control this input */}
 
           <input
             type="text"
@@ -48,7 +47,6 @@ function ItemForm() {
           >
             Amount
           </label>
-          {/* TODO: Add value and onChange to control this input */}
           <input
             type="number"
             id="amount"
