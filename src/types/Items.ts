@@ -8,4 +8,5 @@ export interface ItemsListProps {
   items: Item[];
   deleteItem: (id: number) => void;
   updateItem: (id: number, name: string, count: number) => void;
+  onLockIn: () => void;
 }
