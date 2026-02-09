@@ -13,7 +13,7 @@ function App() {
     const results = [];
     for (const item of items) {
       const result = await fetchItemPrice(item.name);
-      results.push({ name: item.name, ...result });
+      results.push({ name: item.name, amount: item.count, ...result });
     }
     setPriceResults(results);
     setCurrentPage("results");
