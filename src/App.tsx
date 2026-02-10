@@ -48,14 +48,22 @@ function App() {
     );
   }
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-      <ItemForm addItem={addItem} />
-      <ItemsList
-        items={items}
-        deleteItem={deleteItem}
-        updateItem={updateItem}
-        onLockIn={handleLockIn}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 flex flex-col items-center py-10 px-4">
+      <header className="mb-8 text-center">
+        <h1 className="text-4xl font-bold text-white mb-2">CS Skin Tracker</h1>
+        <p className="text-gray-400">
+          Track and manage your Counter-Strike skins
+        </p>
+      </header>
+      <div className="w-full max-w-2xl space-y-6">
+        <ItemForm addItem={addItem} />
+        <ItemsList
+          items={items}
+          deleteItem={deleteItem}
+          updateItem={updateItem}
+          onLockIn={handleLockIn}
+        />
+      </div>
     </div>
   );
 }
