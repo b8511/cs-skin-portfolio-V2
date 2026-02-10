@@ -33,3 +33,19 @@ The app will open at `http://localhost:5173`
 ### Problems
 
 - Steam requests get 429 (Too Many Requests)
+
+##### Possible Solutions
+
+> Request throttling on client — Add a delay between each item's API call (e.g., 500ms). Easiest, no backend changes needed.
+
+> In-memory caching — Cache results in the Vercel function so duplicate requests don't hit Steam. Simple, helps if users retry.
+
+> Redis caching — Use Vercel KV to cache prices across deployments. Medium effort, survives redeploys.
+
+> Request queuing — Serialize requests (one at a time) instead of parallel. Slower UX but safer for Steam limits.
+
+> Rate limit headers — Parse Steam's Retry-After header and respect it explicitly. Moderate, more robust than fixed backoff.
+
+> Batch API or proxy — Use a third-party CS2 price API (CSGOFloat, etc.) instead of Steam directly. Requires API key, depends on third party.
+
+> Your own Steam bot — Host a dedicated service that scrapes/caches Steam prices yourself. Hard, needs hosting + maintenance.
