@@ -29,3 +29,7 @@ npm run dev
 ```
 
 The app will open at `http://localhost:5173`
+
+### Problems
+
+- Steam requests get 429 (Too Many Requests)
