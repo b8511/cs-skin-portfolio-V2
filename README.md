@@ -6,6 +6,8 @@ It’s a simple dashboard where users can enter the names of items from CS2, spe
 
 The idea came from having difficulty tracking the value of my own inventory, especially since some items were stored in storage units. The app assumes you already know which items you own and their quantities.
 
+Deployed at : https://cs-skin-portfolio-v2-fu63it1wb-b8511s-projects.vercel.app/
+
 ## Issues
 
 - There is no data persistence — once you leave the site, all data is lost.
