@@ -34,6 +34,8 @@ The app will open at `http://localhost:5173`
 
 - Steam requests get 429 (Too Many Requests)
 
+- csmarketapi fails to fetch items
+
 ##### Possible Solutions
 
 > Request throttling on client — Add a delay between each item's API call (e.g., 500ms). Easiest, no backend changes needed.
