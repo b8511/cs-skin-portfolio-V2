@@ -130,7 +130,7 @@ export default async function handler(
   try {
     // Try Steam API first
     const steamData = await fetchFromSteam(name);
-    if (steamData) {
+    if (steamData && steamData.success) {
       response.status(200).json(steamData);
       return;
     }
