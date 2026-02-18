@@ -182,14 +182,19 @@ describe("priceoverview endpoint", () => {
     // Mock CSMarketAPI to return null (not configured or fails)
     process.env.CSMARKETAPI_KEY = undefined;
 
+    // Mock setTimeout to skip delays
+    vi.useFakeTimers();
+
     await handler(mockRequest as VercelRequest, mockResponse as VercelResponse);
+
+    vi.useRealTimers();
 
     // After 5 retries, should fallback to CSMarketAPI which fails
     expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(responseData).toEqual({
       error: "Unable to fetch price data from any source",
     });
-  });
+  }, 1000);
 
   it("should URL-encode item names with special characters", async () => {
     const specialItem = "Copenhagen 2024 Nuke Souvenir Package";
