@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { CSMarketAPI, Currency, Market } from "csmarketapi";
 
 const STEAM_APP_ID = "730";
 const DEFAULT_CURRENCY = "1";
@@ -11,15 +10,48 @@ interface SteamPriceResponse {
   volume?: string;
 }
 
+// Rate limiting state
+const rateLimitState = {
+  tokens: 20, // Start with 20 tokens
+  maxTokens: 20,
+  lastRefill: Date.now(),
+  refillRate: 1000, // Refill 1 token per second
+};
+
+function refillTokens() {
+  const now = Date.now();
+  const timePassed = now - rateLimitState.lastRefill;
+  const tokensToAdd = Math.floor(timePassed / rateLimitState.refillRate);
+
+  if (tokensToAdd > 0) {
+    rateLimitState.tokens = Math.min(
+      rateLimitState.maxTokens,
+      rateLimitState.tokens + tokensToAdd,
+    );
+    rateLimitState.lastRefill = now;
+  }
+}
+
 async function fetchFromSteam(
   itemName: string,
 ): Promise<SteamPriceResponse | null> {
   const encodedName = encodeURIComponent(itemName);
   const url = `https://steamcommunity.com/market/priceoverview/?appid=${STEAM_APP_ID}&currency=${DEFAULT_CURRENCY}&market_hash_name=${encodedName}`;
 
-  const maxAttempts = 5;
+  const retryDelays = [2000, 32000, 62000]; // 2s, 32s, 62s
+  const maxAttempts = retryDelays.length + 1; // Initial attempt + 3 retries
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    // Check token bucket before making request
+    refillTokens();
+    if (rateLimitState.tokens < 1) {
+      const waitTime = rateLimitState.refillRate;
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      refillTokens();
+    }
+
+    rateLimitState.tokens -= 1;
+
     const steamResponse = await fetch(url, {
       headers: {
         "User-Agent": "cs-skin-tracker/1.0",
@@ -31,85 +63,22 @@ async function fetchFromSteam(
       return await steamResponse.json();
     }
 
+    // If not a rate limit error, fail immediately
     if (steamResponse.status !== 429 && steamResponse.status !== 503) {
       return null;
     }
 
+    // Retry with specified delays
     if (attempt < maxAttempts) {
-      const baseDelayMs = 400 * 2 ** (attempt - 1);
-      const jitterMs = Math.floor(Math.random() * 150);
-      const delayMs = baseDelayMs + jitterMs;
+      const delayMs = retryDelays[attempt - 1];
+      console.log(
+        `Steam API rate limited, retry ${attempt}/${maxAttempts} after ${delayMs}ms`,
+      );
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
   return null;
-}
-
-async function fetchFromCSMarketAPI(
-  itemName: string,
-): Promise<SteamPriceResponse | null> {
-  const apiKey = process.env.CSMARKETAPI_KEY;
-  if (!apiKey) {
-    console.warn("CSMARKETAPI_KEY not set, skipping fallback");
-    return null;
-  }
-
-  try {
-    const client = new CSMarketAPI({ apiKey });
-    const result = await client.getSalesLatestAggregated({
-      marketHashName: itemName,
-      markets: [Market.STEAMCOMMUNITY],
-      currency: Currency.USD,
-    });
-
-    if (result && result.sales && result.sales.length > 0) {
-      const latestSale = result.sales[0];
-      const minPrice = latestSale.min_price;
-      const medianPrice = latestSale.median_price;
-
-      if (minPrice !== null || medianPrice !== null) {
-        const formatPrice = (cents: number | null) =>
-          cents !== null ? `$${(cents / 100).toFixed(2)}` : undefined;
-
-        return {
-          success: true,
-          lowest_price: formatPrice(minPrice),
-          median_price: formatPrice(medianPrice),
-          volume: latestSale.volume?.toString(),
-        };
-      }
-    }
-
-    // Try listings if no sales data
-    const listings = await client.getListingsLatestAggregated({
-      marketHashName: itemName,
-      markets: [Market.STEAMCOMMUNITY],
-      currency: Currency.USD,
-    });
-
-    if (listings && listings.listings && listings.listings.length > 0) {
-      const steamListing = listings.listings.find(
-        (l) => l.market === Market.STEAMCOMMUNITY,
-      );
-
-      if (steamListing && steamListing.min_price !== null) {
-        return {
-          success: true,
-          lowest_price: `$${(steamListing.min_price / 100).toFixed(2)}`,
-          median_price:
-            steamListing.median_price !== null
-              ? `$${(steamListing.median_price / 100).toFixed(2)}`
-              : undefined,
-        };
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error("CSMarketAPI error:", error);
-    return null;
-  }
 }
 
 export default async function handler(
@@ -128,22 +97,14 @@ export default async function handler(
   }
 
   try {
-    // Try Steam API first
     const steamData = await fetchFromSteam(name);
     if (steamData && steamData.success) {
       response.status(200).json(steamData);
       return;
     }
 
-    // Fallback to CSMarketAPI
-    const csMarketData = await fetchFromCSMarketAPI(name);
-    if (csMarketData) {
-      response.status(200).json(csMarketData);
-      return;
-    }
-
     response.status(503).json({
-      error: "Unable to fetch price data from any source",
+      error: "Unable to fetch price data from Steam",
     });
   } catch (error) {
     response.status(500).json({ error: "Failed to fetch price data" });

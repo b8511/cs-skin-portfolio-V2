@@ -33,8 +33,7 @@ The app will open at `http://localhost:5173`
 ### Problems
 
 - Steam requests get 429 (Too Many Requests)
-
-- csmarketapi fails to fetch items
+  _Quick fix for now:_ we are goinng to just extend the backoff of the Steam api so the requests go through.
 
 ##### Possible Solutions
 

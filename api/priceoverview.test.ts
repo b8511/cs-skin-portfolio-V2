@@ -150,7 +150,7 @@ describe("priceoverview endpoint", () => {
   it("should handle Steam API 429 with retries", async () => {
     mockRequest.query = { name: "Clutch Case" };
 
-    // Mock 4 failures then success
+    // Mock 3 failures then success
     global.fetch = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 429 } as Response)
@@ -164,13 +164,24 @@ describe("priceoverview endpoint", () => {
         }),
       } as Response);
 
-    await handler(mockRequest as VercelRequest, mockResponse as VercelResponse);
+    vi.useFakeTimers();
+
+    const handlerPromise = handler(
+      mockRequest as VercelRequest,
+      mockResponse as VercelResponse,
+    );
+
+    await vi.runAllTimersAsync();
+
+    await handlerPromise;
+
+    vi.useRealTimers();
 
     expect(mockResponse.status).toHaveBeenCalledWith(200);
     expect(global.fetch).toHaveBeenCalledTimes(4);
   });
 
-  it("should return 503 when all sources fail", async () => {
+  it("should return 503 when Steam API fails after all retries", async () => {
     mockRequest.query = { name: "Clutch Case" };
 
     // Mock all Steam attempts fail
@@ -179,20 +190,25 @@ describe("priceoverview endpoint", () => {
       status: 429,
     } as Response);
 
-    // Mock CSMarketAPI to return null (not configured or fails)
-    process.env.CSMARKETAPI_KEY = undefined;
-
     // Mock setTimeout to skip delays
     vi.useFakeTimers();
 
-    await handler(mockRequest as VercelRequest, mockResponse as VercelResponse);
+    const handlerPromise = handler(
+      mockRequest as VercelRequest,
+      mockResponse as VercelResponse,
+    );
+
+    // Fast-forward all timers
+    await vi.runAllTimersAsync();
+
+    await handlerPromise;
 
     vi.useRealTimers();
 
-    // After 5 retries, should fallback to CSMarketAPI which fails
+    // After 4 attempts (1 initial + 3 retries), should return 503
     expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(responseData).toEqual({
-      error: "Unable to fetch price data from any source",
+      error: "Unable to fetch price data from Steam",
     });
   }, 1000);
 
