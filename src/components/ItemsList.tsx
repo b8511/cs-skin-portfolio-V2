@@ -35,16 +35,19 @@ function ItemsList({
         </div>
       ) : (
         <div className="space-y-3 divide-y divide-slate-700">
-          {items.map((item: Item) => (
-            <ItemRow
-              key={item.id}
-              id={item.id}
-              name={item.name}
-              count={item.count}
-              onDelete={deleteItem}
-              onUpdate={updateItem}
-            />
-          ))}
+          {items
+            .slice()
+            .reverse()
+            .map((item: Item) => (
+              <ItemRow
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                count={item.count}
+                onDelete={deleteItem}
+                onUpdate={updateItem}
+              />
+            ))}
         </div>
       )}
     </div>

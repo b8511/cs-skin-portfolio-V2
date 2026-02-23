@@ -41,7 +41,7 @@ The app will open at `http://localhost:5173`
 
 > In-memory caching — Cache results in the Vercel function so duplicate requests don't hit Steam. Simple, helps if users retry.
 
-> Redis caching — Use Vercel KV to cache prices across deployments. Medium effort, survives redeploys.
+> Redis caching — Using Vercel KV to cache prices across deployments. Medium effort, survives redeploys.
 
 > Request queuing — Serialize requests (one at a time) instead of parallel. Slower UX but safer for Steam limits.
 

@@ -1,5 +1,3 @@
-import React from "react";
-
 // Define what props this component receives
 interface ResultsPageProps {
   results: Array<{
@@ -8,17 +6,22 @@ interface ResultsPageProps {
     lowest_price?: string;
     median_price?: string;
     success: boolean;
+    loading?: boolean;
   }>;
   onGoBack: () => void;
 }
 
 function ResultsPage({ results, onGoBack }: ResultsPageProps) {
-  const totalLowest = results.reduce(
+  const loadedResults = results.filter((r) => !r.loading);
+  const loadingCount = results.filter((r) => r.loading).length;
+  const isLoading = loadingCount > 0;
+
+  const totalLowest = loadedResults.reduce(
     (sum, result) =>
       sum + parseFloat(result.lowest_price?.slice(1) || "0") * result.amount,
     0,
   );
-  const totalMedian = results.reduce(
+  const totalMedian = loadedResults.reduce(
     (sum, result) =>
       sum + parseFloat(result.median_price?.slice(1) || "0") * result.amount,
     0,
@@ -51,21 +54,31 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
               <p className="text-sm text-rose-400 font-medium mb-1">
                 Total Lowest Price
               </p>
-              <p className="text-3xl font-bold text-rose-300">
-                ${totalLowest.toFixed(2)}
-              </p>
+              {isLoading ? (
+                <div className="h-9 bg-rose-800/50 rounded animate-pulse"></div>
+              ) : (
+                <p className="text-3xl font-bold text-rose-300">
+                  ${totalLowest.toFixed(2)}
+                </p>
+              )}
             </div>
             <div className="bg-gradient-to-r from-blue-900/50 to-blue-800/50 rounded-lg p-4 border border-blue-700/50">
               <p className="text-sm text-blue-400 font-medium mb-1">
                 Total Median Price
               </p>
-              <p className="text-3xl font-bold text-blue-300">
-                ${totalMedian.toFixed(2)}
-              </p>
+              {isLoading ? (
+                <div className="h-9 bg-blue-800/50 rounded animate-pulse"></div>
+              ) : (
+                <p className="text-3xl font-bold text-blue-300">
+                  ${totalMedian.toFixed(2)}
+                </p>
+              )}
             </div>
           </div>
           <p className="text-sm text-gray-500 mt-4 text-center">
-            {results.length} {results.length === 1 ? "item" : "items"} tracked
+            {isLoading
+              ? `Loading ${loadingCount} of ${results.length} items...`
+              : `${results.length} ${results.length === 1 ? "item" : "items"} tracked`}
           </p>
         </div>
 
@@ -74,7 +87,11 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
           {results.map((result) => (
             <div
               key={result.name}
-              className="bg-slate-800 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-5 border border-slate-700 relative"
+              className={`rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-5 border relative ${
+                result.loading
+                  ? "bg-slate-700/50 border-slate-600 animate-pulse"
+                  : "bg-slate-800 border-slate-700"
+              }`}
             >
               <span className="absolute top-3 right-3 bg-slate-600 text-white text-sm font-bold px-3 py-2 rounded-lg shadow">
                 ×{result.amount}
@@ -85,40 +102,49 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
               >
                 {result.name}
               </h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center py-1 border-b border-slate-700">
-                  <span className="text-gray-400">Lowest Price</span>
-                  <span className="font-medium text-gray-200">
-                    {result.lowest_price ?? "N/A"}
-                  </span>
+
+              {result.loading ? (
+                <div className="space-y-3">
+                  <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
+                  <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
+                  <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-slate-700">
-                  <span className="text-gray-400">Median Price</span>
-                  <span className="font-medium text-gray-200">
-                    {result.median_price ?? "N/A"}
-                  </span>
+              ) : (
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                    <span className="text-gray-400">Lowest Price</span>
+                    <span className="font-medium text-gray-200">
+                      {result.lowest_price ?? "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                    <span className="text-gray-400">Median Price</span>
+                    <span className="font-medium text-gray-200">
+                      {result.median_price ?? "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                    <span className="text-rose-400">Total (Lowest)</span>
+                    <span className="font-semibold text-rose-300">
+                      $
+                      {(
+                        parseFloat(result.lowest_price?.slice(1) || "0") *
+                        result.amount
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-blue-400">Total (Median)</span>
+                    <span className="font-semibold text-blue-300">
+                      $
+                      {(
+                        parseFloat(result.median_price?.slice(1) || "0") *
+                        result.amount
+                      ).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-slate-700">
-                  <span className="text-rose-400">Total (Lowest)</span>
-                  <span className="font-semibold text-rose-300">
-                    $
-                    {(
-                      parseFloat(result.lowest_price?.slice(1) || "0") *
-                      result.amount
-                    ).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-blue-400">Total (Median)</span>
-                  <span className="font-semibold text-blue-300">
-                    $
-                    {(
-                      parseFloat(result.median_price?.slice(1) || "0") *
-                      result.amount
-                    ).toFixed(2)}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
