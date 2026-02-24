@@ -19,15 +19,12 @@ function App() {
   const [priceResults, setPriceResults] = useState<PriceResult[]>([]);
 
   const handleLockIn = async () => {
-    // Clear previous results and switch to results page
     setPriceResults([]);
     setCurrentPage("results");
 
-    // Fetch items sequentially and add to results as they complete
     for (const item of items) {
       try {
         const result = await fetchItemPrice(item.name);
-        // Only add if we got price data
         if (result.lowest_price || result.median_price) {
           setPriceResults((prev) => [
             ...prev,
@@ -39,9 +36,7 @@ function App() {
             },
           ]);
         }
-      } catch (error) {
-        // Skip failed items
-      }
+      } catch (error) {}
     }
   };
   const [items, setItems] = useState<Item[]>([]);
