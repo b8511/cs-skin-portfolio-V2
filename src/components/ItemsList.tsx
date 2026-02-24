@@ -1,4 +1,3 @@
-import React from "react";
 import ItemRow from "./ItemRow";
 import { Item, ItemsListProps } from "../types/Items";
 
