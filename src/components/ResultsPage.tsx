@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 // Define what props this component receives
 interface ResultsPageProps {
   results: Array<{
@@ -12,6 +14,16 @@ interface ResultsPageProps {
 }
 
 function ResultsPage({ results, onGoBack }: ResultsPageProps) {
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+
+  const buildImageUrl = (name: string) => {
+    const normalized = name
+      .replace(/\s+/g, "_")
+      .replace(/[^a-zA-Z0-9_&]+/g, "")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    return `https://www.csgodatabase.com/images/containers/webp/${normalized}.webp`;
+  };
   const loadedResults = results.filter((r) => !r.loading);
   const loadingCount = results.filter((r) => r.loading).length;
   const isLoading = loadingCount > 0;
@@ -84,69 +96,98 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
 
         {/* Items Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {results.map((result) => (
-            <div
-              key={result.name}
-              className={`rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-5 border relative ${
-                result.loading
-                  ? "bg-slate-700/50 border-slate-600 animate-pulse"
-                  : "bg-slate-800 border-slate-700"
-              }`}
-            >
-              <span className="absolute top-3 right-3 bg-slate-600 text-white text-sm font-bold px-3 py-2 rounded-lg shadow">
-                ×{result.amount}
-              </span>
-              <h2
-                className="text-lg font-bold text-white mb-3 truncate pr-8"
-                title={result.name}
-              >
-                {result.name}
-              </h2>
+          {results.map((result) => {
+            const imageUrl = buildImageUrl(result.name);
+            const hasImageError = imageErrors[result.name];
 
-              {result.loading ? (
-                <div className="space-y-3">
-                  <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
-                  <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
-                  <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
-                </div>
-              ) : (
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between items-center py-1 border-b border-slate-700">
-                    <span className="text-gray-400">Lowest Price</span>
-                    <span className="font-medium text-gray-200">
-                      {result.lowest_price ?? "N/A"}
-                    </span>
+            return (
+              <div
+                key={result.name}
+                className={`rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-5 border relative ${
+                  result.loading
+                    ? "bg-slate-700/50 border-slate-600 animate-pulse"
+                    : "bg-slate-800 border-slate-700"
+                }`}
+              >
+                <span className="absolute top-3 right-3 bg-slate-600 text-white text-sm font-bold px-3 py-2 rounded-lg shadow">
+                  ×{result.amount}
+                </span>
+                <h2
+                  className="text-lg font-bold text-white mb-3 truncate pr-8"
+                  title={result.name}
+                >
+                  {result.name}
+                </h2>
+
+                {result.loading ? (
+                  <div className="space-y-3">
+                    <div className="h-32 bg-slate-600 rounded animate-pulse"></div>
+                    <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
+                    <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b border-slate-700">
-                    <span className="text-gray-400">Median Price</span>
-                    <span className="font-medium text-gray-200">
-                      {result.median_price ?? "N/A"}
-                    </span>
+                ) : (
+                  <div className="space-y-3 text-sm">
+                    <div className="h-32 rounded border border-slate-700 bg-slate-900/40 flex items-center justify-center overflow-hidden">
+                      {hasImageError ? (
+                        <a
+                          className="text-sky-300 text-xs underline px-3 text-center"
+                          href={imageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Image not found. Open image URL
+                        </a>
+                      ) : (
+                        <img
+                          src={imageUrl}
+                          alt={result.name}
+                          className="h-full w-full object-contain"
+                          onError={() =>
+                            setImageErrors((prev) => ({
+                              ...prev,
+                              [result.name]: true,
+                            }))
+                          }
+                        />
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                      <span className="text-gray-400">Lowest Price</span>
+                      <span className="font-medium text-gray-200">
+                        {result.lowest_price ?? "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                      <span className="text-gray-400">Median Price</span>
+                      <span className="font-medium text-gray-200">
+                        {result.median_price ?? "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                      <span className="text-rose-400">Total (Lowest)</span>
+                      <span className="font-semibold text-rose-300">
+                        $
+                        {(
+                          parseFloat(result.lowest_price?.slice(1) || "0") *
+                          result.amount
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-blue-400">Total (Median)</span>
+                      <span className="font-semibold text-blue-300">
+                        $
+                        {(
+                          parseFloat(result.median_price?.slice(1) || "0") *
+                          result.amount
+                        ).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b border-slate-700">
-                    <span className="text-rose-400">Total (Lowest)</span>
-                    <span className="font-semibold text-rose-300">
-                      $
-                      {(
-                        parseFloat(result.lowest_price?.slice(1) || "0") *
-                        result.amount
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-blue-400">Total (Median)</span>
-                    <span className="font-semibold text-blue-300">
-                      $
-                      {(
-                        parseFloat(result.median_price?.slice(1) || "0") *
-                        result.amount
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
