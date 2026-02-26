@@ -53,4 +53,4 @@ The app will open at `http://localhost:5173`
 
 ### Features
 
-> 26/02/2026 Added Images dysplay
+> 26/02/2026 Added Images display in the results page
