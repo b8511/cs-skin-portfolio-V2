@@ -50,3 +50,7 @@ The app will open at `http://localhost:5173`
 > Batch API or proxy — Use a third-party CS2 price API (CSGOFloat, etc.) instead of Steam directly. Requires API key, depends on third party.
 
 > Your own Steam bot — Host a dedicated service that scrapes/caches Steam prices yourself. Hard, needs hosting + maintenance.
+
+### Features
+
+> 26/02/2026 Added Images dysplay
