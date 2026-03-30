@@ -63,6 +63,10 @@ export const cs2Items: CS2Item[] = [
   { name: "Kilowatt Case", category: "case" },
   { name: "Gallery Case", category: "case" },
   { name: "Horizon Case", category: "case" },
+  { name: "CS20 Case", category: "case" },
+  { name: "Shattered Web Case", category: "case" },
+  { name: "Broken Fang Case", category: "case" },
+  { name: "Fever Case", category: "case" },
 
   // Souvenir Packages
   { name: "Copenhagen 2024 Mirage Souvenir Package", category: "case" },

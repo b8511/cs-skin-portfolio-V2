@@ -148,6 +148,7 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
                               [result.name]: true,
                             }))
                           }
+                          referrerPolicy="no-referrer"
                         />
                       )}
                     </div>

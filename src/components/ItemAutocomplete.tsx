@@ -144,6 +144,7 @@ function ItemAutocomplete({
                     className="w-full h-full object-contain"
                     onError={() => handleImageError(item.name)}
                     loading="lazy"
+                    referrerPolicy="no-referrer"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">

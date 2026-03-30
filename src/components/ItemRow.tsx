@@ -47,6 +47,7 @@ function ItemRow({ id, name, count, onDelete, onUpdate }: ItemRowProps) {
             className="w-full h-full object-contain"
             onError={() => setImageError(true)}
             loading="lazy"
+            referrerPolicy="no-referrer"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-500 text-lg">
