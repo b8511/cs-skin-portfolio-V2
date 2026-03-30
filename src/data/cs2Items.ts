@@ -13,14 +13,9 @@ export interface CS2Item {
     | "other";
 }
 
-// Helper to generate image URL from item name
+// Helper to generate image URL — routes through our proxy to avoid hotlink protection
 export function getItemImageUrl(itemName: string): string {
-  const normalized = itemName
-    .replace(/\s+/g, "_")
-    .replace(/[^a-zA-Z0-9_&-]+/g, "")
-    .replace(/_+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  return `https://www.csgodatabase.com/images/containers/webp/${normalized}.webp`;
+  return `/api/itemimage?n=${encodeURIComponent(itemName)}`;
 }
 
 // Popular CS2 items - curated list of commonly traded items

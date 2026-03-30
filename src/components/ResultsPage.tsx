@@ -17,12 +17,7 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const buildImageUrl = (name: string) => {
-    const normalized = name
-      .replace(/\s+/g, "_")
-      .replace(/[^a-zA-Z0-9_&]+/g, "")
-      .replace(/_+/g, "_")
-      .replace(/^_+|_+$/g, "");
-    return `https://www.csgodatabase.com/images/containers/webp/${normalized}.webp`;
+    return `/api/itemimage?n=${encodeURIComponent(name)}`;
   };
   const loadedResults = results.filter((r) => !r.loading);
   const loadingCount = results.filter((r) => r.loading).length;
