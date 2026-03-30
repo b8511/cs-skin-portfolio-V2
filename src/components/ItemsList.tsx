@@ -33,7 +33,7 @@ function ItemsList({
           </p>
         </div>
       ) : (
-        <div className="space-y-3 divide-y divide-slate-700">
+        <div className="space-y-2">
           {items
             .slice()
             .reverse()

@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ItemForm from "./components/ItemForm";
 import ItemsList from "./components/ItemsList";
+import PortfolioKeyManager from "./components/PortfolioKeyManager";
 import { Item } from "./types/Items";
 import ResultsPage from "./components/ResultsPage";
 import { fetchItemPrice } from "./api/steamApi";
+import {
+  getPortfolioFromUrl,
+  hasPortfolioInUrl,
+  loadFromLocalStorage,
+  saveToLocalStorage,
+} from "./utils/portfolioCodec";
 
 interface PriceResult {
   name: string;
@@ -17,6 +24,37 @@ interface PriceResult {
 function App() {
   const [currentPage, setCurrentPage] = useState("main");
   const [priceResults, setPriceResults] = useState<PriceResult[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load portfolio from URL or localStorage on mount
+  useEffect(() => {
+    if (hasPortfolioInUrl()) {
+      // Priority 1: URL parameter
+      const urlItems = getPortfolioFromUrl();
+      if (urlItems.length > 0) {
+        setItems(urlItems);
+        // Also save to localStorage for persistence
+        saveToLocalStorage(urlItems);
+        // Clear URL param after loading (optional - keeps URL clean)
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    } else {
+      // Priority 2: localStorage
+      const storedItems = loadFromLocalStorage();
+      if (storedItems.length > 0) {
+        setItems(storedItems);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save to localStorage whenever items change (after initial load)
+  useEffect(() => {
+    if (isLoaded) {
+      saveToLocalStorage(items);
+    }
+  }, [items, isLoaded]);
 
   const handleLockIn = async () => {
     setPriceResults([]);
@@ -39,8 +77,6 @@ function App() {
       } catch (error) {}
     }
   };
-  const [items, setItems] = useState<Item[]>([]);
-  console.log("Current items:", items);
 
   const addItem = (name: string, count: number) => {
     const newItem: Item = {
@@ -60,6 +96,11 @@ function App() {
       items.map((item) => (item.id === id ? { ...item, name, count } : item)),
     );
   };
+
+  const loadPortfolio = (newItems: Item[]) => {
+    setItems(newItems);
+  };
+
   if (currentPage === "results") {
     return (
       <ResultsPage
@@ -84,6 +125,7 @@ function App() {
           updateItem={updateItem}
           onLockIn={handleLockIn}
         />
+        <PortfolioKeyManager items={items} onLoadPortfolio={loadPortfolio} />
       </div>
     </div>
   );

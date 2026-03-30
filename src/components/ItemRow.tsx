@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import DeleteIcon from "./icons/DeleteIcon";
+import { getItemImageUrl } from "../data/cs2Items";
 
 interface ItemRowProps {
   id: number;
@@ -12,6 +13,7 @@ interface ItemRowProps {
 function ItemRow({ id, name, count, onDelete, onUpdate }: ItemRowProps) {
   const [editedName, setEditedName] = useState(name);
   const [editedCount, setEditedCount] = useState(count);
+  const [imageError, setImageError] = useState(false);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedName(e.target.value);
@@ -24,6 +26,7 @@ function ItemRow({ id, name, count, onDelete, onUpdate }: ItemRowProps) {
   const handleNameBlur = () => {
     if (editedName.trim() !== "") {
       onUpdate(id, editedName, editedCount);
+      setImageError(false); // Reset image error when name changes
     }
   };
 
@@ -34,24 +37,50 @@ function ItemRow({ id, name, count, onDelete, onUpdate }: ItemRowProps) {
   };
 
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+    <div className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition pt-4 first:pt-3">
+      {/* Item thumbnail */}
+      <div className="w-10 h-10 flex-shrink-0 bg-slate-800 rounded overflow-hidden flex items-center justify-center">
+        {!imageError ? (
+          <img
+            src={getItemImageUrl(name)}
+            alt={name}
+            className="w-full h-full object-contain"
+            onError={() => setImageError(true)}
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-500 text-lg">
+            📦
+          </div>
+        )}
+      </div>
+
+      {/* Item name input */}
       <input
         type="text"
         value={editedName}
         onChange={handleNameChange}
         onBlur={handleNameBlur}
-        className="flex-grow bg-transparent font-medium text-gray-700 focus:outline-none focus:bg-white focus:px-2 focus:py-1 focus:rounded"
+        className="flex-grow bg-transparent font-medium text-gray-200 focus:outline-none focus:bg-slate-800 focus:px-2 focus:py-1 focus:rounded min-w-0"
       />
-      <input
-        type="number"
-        value={editedCount}
-        onChange={handleCountChange}
-        onBlur={handleCountBlur}
-        className="w-16 text-center bg-transparent font-medium text-gray-700 focus:outline-none focus:bg-white focus:px-2 focus:py-1 focus:rounded mx-4"
-      />
+
+      {/* Count input */}
+      <div className="flex items-center gap-1">
+        <span className="text-gray-400 text-sm">×</span>
+        <input
+          type="number"
+          value={editedCount}
+          onChange={handleCountChange}
+          onBlur={handleCountBlur}
+          className="w-14 text-center bg-transparent font-medium text-gray-200 focus:outline-none focus:bg-slate-800 focus:px-2 focus:py-1 focus:rounded"
+          min="0"
+        />
+      </div>
+
+      {/* Delete button */}
       <button
         onClick={() => onDelete(id)}
-        className="text-red-500 hover:text-red-700 transition"
+        className="text-red-400 hover:text-red-300 transition p-1"
       >
         <DeleteIcon />
       </button>
