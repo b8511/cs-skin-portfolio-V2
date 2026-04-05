@@ -37,11 +37,18 @@ function ItemRow({ id, name, count, onDelete, onUpdate }: ItemRowProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition pt-4 first:pt-3">
+    <div
+      className={`flex items-center gap-3 p-3 rounded-lg transition pt-4 first:pt-3 border ${
+        imageError
+          ? "bg-yellow-500/10 border-yellow-500/50 hover:bg-yellow-500/15"
+          : "bg-slate-700/50 border-transparent hover:bg-slate-700"
+      }`}
+    >
       {/* Item thumbnail */}
-      <div className="w-10 h-10 flex-shrink-0 bg-slate-800 rounded overflow-hidden flex items-center justify-center">
+      <div className="relative w-10 h-10 flex-shrink-0 bg-slate-800 rounded overflow-hidden flex items-center justify-center">
         {!imageError ? (
           <img
+            key={name}
             src={getItemImageUrl(name)}
             alt={name}
             className="w-full h-full object-contain"
@@ -50,8 +57,10 @@ function ItemRow({ id, name, count, onDelete, onUpdate }: ItemRowProps) {
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-500 text-lg">
-            📦
+          <div className="w-full h-full flex items-center justify-center bg-yellow-500/20 rounded">
+            <span className="w-5 h-5 rounded-full border-2 border-yellow-400 text-yellow-400 font-bold text-xs flex items-center justify-center leading-none">
+              !
+            </span>
           </div>
         )}
       </div>
@@ -62,7 +71,9 @@ function ItemRow({ id, name, count, onDelete, onUpdate }: ItemRowProps) {
         value={editedName}
         onChange={handleNameChange}
         onBlur={handleNameBlur}
-        className="flex-grow bg-transparent font-medium text-gray-200 focus:outline-none focus:bg-slate-800 focus:px-2 focus:py-1 focus:rounded min-w-0"
+        className={`flex-grow bg-transparent font-medium focus:outline-none focus:bg-slate-800 focus:px-2 focus:py-1 focus:rounded min-w-0 ${
+          imageError ? "text-yellow-200" : "text-gray-200"
+        }`}
       />
 
       {/* Count input */}
