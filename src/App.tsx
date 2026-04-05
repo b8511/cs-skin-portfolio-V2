@@ -22,6 +22,7 @@ interface PriceResult {
   error?: boolean;
   cached?: boolean;
   cached_at?: number;
+  resolved_name?: string;
 }
 
 function App() {
@@ -80,6 +81,7 @@ function App() {
               ? {
                   ...r,
                   ...result,
+                  name: result.resolved_name ?? r.name,
                   loading: false,
                   error:
                     !result.success ||
@@ -139,6 +141,7 @@ function App() {
             ? {
                 ...r,
                 ...result,
+                name: result.resolved_name ?? r.name,
                 loading: false,
                 error:
                   !result.success ||

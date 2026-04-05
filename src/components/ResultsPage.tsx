@@ -285,7 +285,7 @@ function ResultsPage({ results, onGoBack, onRetry }: ResultsPageProps) {
                       No price found. Edit the name and retry:
                     </p>
                     <input
-                      className="w-full bg-slate-700 border border-red-700/50 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-slate-700 border border-red-700/50 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors font-sans"
                       value={editNames[result.name] ?? result.name}
                       onChange={(e) =>
                         setEditNames((prev) => ({
