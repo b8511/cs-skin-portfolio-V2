@@ -81,7 +81,9 @@ function App() {
                   ...r,
                   ...result,
                   loading: false,
-                  error: !result.success,
+                  error:
+                    !result.success ||
+                    (!result.lowest_price && !result.median_price),
                 }
               : r,
           ),
