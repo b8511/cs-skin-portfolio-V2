@@ -227,7 +227,7 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
             return (
               <div
                 key={result.name}
-                className={`rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-5 border relative ${
+                className={`rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-5 border ${
                   result.loading
                     ? "bg-slate-700/50 border-slate-600"
                     : result.error
@@ -235,42 +235,41 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
                       : "bg-slate-800 border-slate-700"
                 }`}
               >
-                {/* Status badge — top-left */}
-                <span className="absolute top-3 left-3">
-                  {result.loading ? (
-                    <Spinner />
-                  ) : result.error ? (
-                    <span className="w-5 h-5 rounded-full border-2 border-red-400 text-red-400 font-bold text-xs flex items-center justify-center">
-                      !
-                    </span>
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-green-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  )}
-                </span>
-
-                {/* Amount badge — top-right */}
-                <span className="absolute top-3 right-3 bg-slate-600 text-white text-sm font-bold px-3 py-1 rounded-lg shadow">
-                  ×{result.amount}
-                </span>
-
-                <h2
-                  className="text-lg font-bold text-white mb-3 truncate px-6"
-                  title={result.name}
-                >
-                  {result.name}
-                </h2>
+                {/* Header row: status icon + name + amount — no overlap */}
+                <div className="flex items-center gap-2 mb-3 min-w-0">
+                  <span className="flex-shrink-0">
+                    {result.loading ? (
+                      <Spinner />
+                    ) : result.error ? (
+                      <span className="w-5 h-5 rounded-full border-2 border-red-400 text-red-400 font-bold text-xs flex items-center justify-center">
+                        !
+                      </span>
+                    ) : (
+                      <svg
+                        className="w-4 h-4 text-green-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  <h2
+                    className="text-base font-bold text-white truncate flex-1 min-w-0"
+                    title={result.name}
+                  >
+                    {result.name}
+                  </h2>
+                  <span className="flex-shrink-0 bg-slate-600 text-white text-sm font-bold px-3 py-1 rounded-lg shadow">
+                    ×{result.amount}
+                  </span>
+                </div>
 
                 {result.loading ? (
                   <div className="space-y-3 animate-pulse">
