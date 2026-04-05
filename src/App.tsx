@@ -19,6 +19,9 @@ interface PriceResult {
   median_price?: string;
   success: boolean;
   loading?: boolean;
+  error?: boolean;
+  cached?: boolean;
+  cached_at?: number;
 }
 
 function App() {
@@ -57,24 +60,41 @@ function App() {
   }, [items, isLoaded]);
 
   const handleLockIn = async () => {
-    setPriceResults([]);
+    // Initialise every item as loading so the results page shows progress immediately
+    const initial: PriceResult[] = items.map((item) => ({
+      name: item.name,
+      amount: item.count,
+      success: false,
+      loading: true,
+      error: false,
+    }));
+    setPriceResults(initial);
     setCurrentPage("results");
 
     for (const item of items) {
       try {
         const result = await fetchItemPrice(item.name);
-        if (result.lowest_price || result.median_price) {
-          setPriceResults((prev) => [
-            ...prev,
-            {
-              name: item.name,
-              amount: item.count,
-              ...result,
-              loading: false,
-            },
-          ]);
-        }
-      } catch (error) {}
+        setPriceResults((prev) =>
+          prev.map((r) =>
+            r.name === item.name
+              ? {
+                  ...r,
+                  ...result,
+                  loading: false,
+                  error: !result.success,
+                }
+              : r,
+          ),
+        );
+      } catch {
+        setPriceResults((prev) =>
+          prev.map((r) =>
+            r.name === item.name
+              ? { ...r, loading: false, success: false, error: true }
+              : r,
+          ),
+        );
+      }
     }
   };
 

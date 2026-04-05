@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { getItemImageUrl } from "../data/cs2Items";
 
-// Define what props this component receives
 interface ResultsPageProps {
   results: Array<{
     name: string;
@@ -10,6 +9,9 @@ interface ResultsPageProps {
     median_price?: string;
     success: boolean;
     loading?: boolean;
+    error?: boolean;
+    cached?: boolean;
+    cached_at?: number;
   }>;
   onGoBack: () => void;
 }
@@ -34,21 +36,58 @@ function parsePrice(price?: string): number {
   return parseFloat(price?.replace(/[^0-9.]/g, "") || "0");
 }
 
+function formatCachedAge(cached_at?: number): string {
+  if (!cached_at) return "cached";
+  const diffMs = Date.now() - cached_at * 1000;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 60) return `cached ${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  return `cached ${hrs}h ago`;
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="animate-spin h-4 w-4 text-blue-400"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+      />
+    </svg>
+  );
+}
+
 function ResultsPage({ results, onGoBack }: ResultsPageProps) {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [sortField, setSortField] = useState<SortField>("total_lowest");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const loadedResults = results.filter((r) => !r.loading);
-  const loadingCount = results.filter((r) => r.loading).length;
+  const total = results.length;
+  const doneCount = results.filter((r) => !r.loading).length;
+  const loadingCount = total - doneCount;
   const isLoading = loadingCount > 0;
+  const progressPct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+  const loadedResults = results.filter((r) => !r.loading && !r.error);
 
   const totalLowest = loadedResults.reduce(
-    (sum, result) => sum + parsePrice(result.lowest_price) * result.amount,
+    (sum, r) => sum + parsePrice(r.lowest_price) * r.amount,
     0,
   );
   const totalMedian = loadedResults.reduce(
-    (sum, result) => sum + parsePrice(result.median_price) * result.amount,
+    (sum, r) => sum + parsePrice(r.median_price) * r.amount,
     0,
   );
 
@@ -68,7 +107,6 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
   }
 
   const sortedResults = [...results].sort((a, b) => {
-    // loading items always go to bottom
     if (a.loading && !b.loading) return 1;
     if (!a.loading && b.loading) return -1;
     const diff = getSortValue(a) - getSortValue(b);
@@ -112,7 +150,7 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
                 Total Lowest Price
               </p>
               {isLoading ? (
-                <div className="h-9 bg-rose-800/50 rounded animate-pulse"></div>
+                <div className="h-9 bg-rose-800/50 rounded animate-pulse" />
               ) : (
                 <p className="text-3xl font-bold text-rose-300">
                   ${totalLowest.toFixed(2)}
@@ -124,7 +162,7 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
                 Total Median Price
               </p>
               {isLoading ? (
-                <div className="h-9 bg-blue-800/50 rounded animate-pulse"></div>
+                <div className="h-9 bg-blue-800/50 rounded animate-pulse" />
               ) : (
                 <p className="text-3xl font-bold text-blue-300">
                   ${totalMedian.toFixed(2)}
@@ -132,11 +170,29 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
               )}
             </div>
           </div>
-          <p className="text-sm text-gray-500 mt-4 text-center">
-            {isLoading
-              ? `Loading ${loadingCount} of ${results.length} items...`
-              : `${results.length} ${results.length === 1 ? "item" : "items"} tracked`}
-          </p>
+
+          {/* Progress bar */}
+          <div className="mt-4">
+            <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <span>
+                {isLoading
+                  ? `Fetching prices… ${doneCount} / ${total}`
+                  : `All ${total} ${total === 1 ? "item" : "items"} fetched`}
+              </span>
+              <span>{progressPct}%</span>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-2 rounded-full transition-all duration-300"
+                style={{
+                  width: `${progressPct}%`,
+                  background: isLoading
+                    ? "linear-gradient(90deg, #3b82f6, #60a5fa)"
+                    : "linear-gradient(90deg, #22c55e, #4ade80)",
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Sort bar */}
@@ -173,28 +229,67 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
                 key={result.name}
                 className={`rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-5 border relative ${
                   result.loading
-                    ? "bg-slate-700/50 border-slate-600 animate-pulse"
-                    : "bg-slate-800 border-slate-700"
+                    ? "bg-slate-700/50 border-slate-600"
+                    : result.error
+                      ? "bg-red-900/20 border-red-700/50"
+                      : "bg-slate-800 border-slate-700"
                 }`}
               >
-                <span className="absolute top-3 right-3 bg-slate-600 text-white text-sm font-bold px-3 py-2 rounded-lg shadow">
+                {/* Status badge — top-left */}
+                <span className="absolute top-3 left-3">
+                  {result.loading ? (
+                    <Spinner />
+                  ) : result.error ? (
+                    <span className="w-5 h-5 rounded-full border-2 border-red-400 text-red-400 font-bold text-xs flex items-center justify-center">
+                      !
+                    </span>
+                  ) : (
+                    <svg
+                      className="w-4 h-4 text-green-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                </span>
+
+                {/* Amount badge — top-right */}
+                <span className="absolute top-3 right-3 bg-slate-600 text-white text-sm font-bold px-3 py-1 rounded-lg shadow">
                   ×{result.amount}
                 </span>
+
                 <h2
-                  className="text-lg font-bold text-white mb-3 truncate pr-8"
+                  className="text-lg font-bold text-white mb-3 truncate px-6"
                   title={result.name}
                 >
                   {result.name}
                 </h2>
 
                 {result.loading ? (
-                  <div className="space-y-3">
-                    <div className="h-32 bg-slate-600 rounded animate-pulse"></div>
-                    <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
-                    <div className="h-4 bg-slate-600 rounded animate-pulse"></div>
+                  <div className="space-y-3 animate-pulse">
+                    <div className="h-32 bg-slate-600 rounded" />
+                    <div className="h-4 bg-slate-600 rounded" />
+                    <div className="h-4 bg-slate-600 rounded" />
                   </div>
+                ) : result.error ? (
+                  <p className="text-red-400 text-sm text-center py-8">
+                    Failed to fetch price. Check item name or try again.
+                  </p>
                 ) : (
                   <div className="space-y-3 text-sm">
+                    {/* Cached indicator */}
+                    {result.cached && (
+                      <p className="text-xs text-amber-400/80 text-right -mt-1">
+                        ⚡ {formatCachedAge(result.cached_at)}
+                      </p>
+                    )}
                     <div className="h-32 rounded border border-slate-700 bg-slate-900/40 flex items-center justify-center overflow-hidden">
                       {hasImageError ? (
                         <a
