@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getItemImageUrl } from "../data/cs2Items";
 
 // Define what props this component receives
 interface ResultsPageProps {
@@ -16,9 +17,6 @@ interface ResultsPageProps {
 function ResultsPage({ results, onGoBack }: ResultsPageProps) {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
-  const buildImageUrl = (name: string) => {
-    return `/api/itemimage?n=${encodeURIComponent(name)}`;
-  };
   const loadedResults = results.filter((r) => !r.loading);
   const loadingCount = results.filter((r) => r.loading).length;
   const isLoading = loadingCount > 0;
@@ -92,7 +90,7 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
         {/* Items Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {results.map((result) => {
-            const imageUrl = buildImageUrl(result.name);
+            const imageUrl = getItemImageUrl(result.name);
             const hasImageError = imageErrors[result.name];
 
             return (
