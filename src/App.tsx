@@ -123,11 +123,47 @@ function App() {
     setItems(newItems);
   };
 
+  const handleRetry = async (oldName: string, newName: string) => {
+    setPriceResults((prev) =>
+      prev.map((r) =>
+        r.name === oldName
+          ? { ...r, name: newName, loading: true, error: false, success: false }
+          : r,
+      ),
+    );
+    try {
+      const result = await fetchItemPrice(newName);
+      setPriceResults((prev) =>
+        prev.map((r) =>
+          r.name === newName
+            ? {
+                ...r,
+                ...result,
+                loading: false,
+                error:
+                  !result.success ||
+                  (!result.lowest_price && !result.median_price),
+              }
+            : r,
+        ),
+      );
+    } catch {
+      setPriceResults((prev) =>
+        prev.map((r) =>
+          r.name === newName
+            ? { ...r, loading: false, success: false, error: true }
+            : r,
+        ),
+      );
+    }
+  };
+
   if (currentPage === "results") {
     return (
       <ResultsPage
         results={priceResults}
         onGoBack={() => setCurrentPage("main")}
+        onRetry={handleRetry}
       />
     );
   }

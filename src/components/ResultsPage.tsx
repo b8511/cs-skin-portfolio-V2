@@ -14,6 +14,7 @@ interface ResultsPageProps {
     cached_at?: number;
   }>;
   onGoBack: () => void;
+  onRetry: (oldName: string, newName: string) => void;
 }
 
 type SortField =
@@ -69,10 +70,11 @@ function Spinner() {
   );
 }
 
-function ResultsPage({ results, onGoBack }: ResultsPageProps) {
+function ResultsPage({ results, onGoBack, onRetry }: ResultsPageProps) {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [sortField, setSortField] = useState<SortField>("total_lowest");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [editNames, setEditNames] = useState<Record<string, string>>({});
 
   const total = results.length;
   const doneCount = results.filter((r) => !r.loading).length;
@@ -278,9 +280,40 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
                     <div className="h-4 bg-slate-600 rounded" />
                   </div>
                 ) : result.error ? (
-                  <p className="text-red-400 text-sm text-center py-8">
-                    Failed to fetch price. Check item name or try again.
-                  </p>
+                  <div className="py-2 space-y-2">
+                    <p className="text-red-400 text-xs text-center mb-1">
+                      No price found. Edit the name and retry:
+                    </p>
+                    <input
+                      className="w-full bg-slate-700 border border-red-700/50 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
+                      value={editNames[result.name] ?? result.name}
+                      onChange={(e) =>
+                        setEditNames((prev) => ({
+                          ...prev,
+                          [result.name]: e.target.value,
+                        }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const n = (
+                            editNames[result.name] ?? result.name
+                          ).trim();
+                          onRetry(result.name, n || result.name);
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const n = (
+                          editNames[result.name] ?? result.name
+                        ).trim();
+                        onRetry(result.name, n || result.name);
+                      }}
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
                 ) : (
                   <div className="space-y-3 text-sm">
                     {/* Cached indicator */}
