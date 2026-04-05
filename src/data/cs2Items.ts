@@ -13,9 +13,11 @@ export interface CS2Item {
     | "other";
 }
 
-// Helper to generate image URL — routes through our proxy to avoid hotlink protection
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
+
+// Helper to generate image URL — routes through the Python backend image proxy
 export function getItemImageUrl(itemName: string): string {
-  return `/api/itemimage?n=${encodeURIComponent(itemName)}`;
+  return `${API_BASE}/api/images?n=${encodeURIComponent(itemName)}`;
 }
 
 // Popular CS2 items - curated list of commonly traded items
