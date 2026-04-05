@@ -14,23 +14,75 @@ interface ResultsPageProps {
   onGoBack: () => void;
 }
 
+type SortField =
+  | "unit_lowest"
+  | "unit_median"
+  | "total_lowest"
+  | "total_median"
+  | "amount";
+type SortDir = "desc" | "asc";
+
+const SORT_LABELS: Record<SortField, string> = {
+  unit_lowest: "Unit (Low)",
+  unit_median: "Unit (Med)",
+  total_lowest: "Total (Low)",
+  total_median: "Total (Med)",
+  amount: "Amount",
+};
+
+function parsePrice(price?: string): number {
+  return parseFloat(price?.replace(/[^0-9.]/g, "") || "0");
+}
+
 function ResultsPage({ results, onGoBack }: ResultsPageProps) {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [sortField, setSortField] = useState<SortField>("total_lowest");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const loadedResults = results.filter((r) => !r.loading);
   const loadingCount = results.filter((r) => r.loading).length;
   const isLoading = loadingCount > 0;
 
   const totalLowest = loadedResults.reduce(
-    (sum, result) =>
-      sum + parseFloat(result.lowest_price?.slice(1) || "0") * result.amount,
+    (sum, result) => sum + parsePrice(result.lowest_price) * result.amount,
     0,
   );
   const totalMedian = loadedResults.reduce(
-    (sum, result) =>
-      sum + parseFloat(result.median_price?.slice(1) || "0") * result.amount,
+    (sum, result) => sum + parsePrice(result.median_price) * result.amount,
     0,
   );
+
+  function getSortValue(r: (typeof results)[number]): number {
+    switch (sortField) {
+      case "unit_lowest":
+        return parsePrice(r.lowest_price);
+      case "unit_median":
+        return parsePrice(r.median_price);
+      case "total_lowest":
+        return parsePrice(r.lowest_price) * r.amount;
+      case "total_median":
+        return parsePrice(r.median_price) * r.amount;
+      case "amount":
+        return r.amount;
+    }
+  }
+
+  const sortedResults = [...results].sort((a, b) => {
+    // loading items always go to bottom
+    if (a.loading && !b.loading) return 1;
+    if (!a.loading && b.loading) return -1;
+    const diff = getSortValue(a) - getSortValue(b);
+    return sortDir === "desc" ? -diff : diff;
+  });
+
+  function handleFieldClick(field: SortField) {
+    if (field === sortField) {
+      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 py-10 px-4">
@@ -87,9 +139,32 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
           </p>
         </div>
 
+        {/* Sort bar */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-gray-400 text-sm font-medium mr-1">
+            Sort by:
+          </span>
+          {(Object.keys(SORT_LABELS) as SortField[]).map((field) => (
+            <button
+              key={field}
+              onClick={() => handleFieldClick(field)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                sortField === field
+                  ? "bg-blue-600 border-blue-500 text-white"
+                  : "bg-slate-700 border-slate-600 text-gray-300 hover:bg-slate-600"
+              }`}
+            >
+              {SORT_LABELS[field]}
+              {sortField === field && (
+                <span className="ml-1">{sortDir === "desc" ? "↓" : "↑"}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
         {/* Items Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {results.map((result) => {
+          {sortedResults.map((result) => {
             const imageUrl = getItemImageUrl(result.name);
             const hasImageError = imageErrors[result.name];
 
@@ -145,35 +220,41 @@ function ResultsPage({ results, onGoBack }: ResultsPageProps) {
                         />
                       )}
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                    <div
+                      className={`flex justify-between items-center py-1 border-b border-slate-700 ${sortField === "unit_lowest" ? "ring-1 ring-blue-500/40 rounded px-1" : ""}`}
+                    >
                       <span className="text-gray-400">Lowest Price</span>
                       <span className="font-medium text-gray-200">
                         {result.lowest_price ?? "N/A"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                    <div
+                      className={`flex justify-between items-center py-1 border-b border-slate-700 ${sortField === "unit_median" ? "ring-1 ring-blue-500/40 rounded px-1" : ""}`}
+                    >
                       <span className="text-gray-400">Median Price</span>
                       <span className="font-medium text-gray-200">
                         {result.median_price ?? "N/A"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-700">
+                    <div
+                      className={`flex justify-between items-center py-1 border-b border-slate-700 ${sortField === "total_lowest" ? "ring-1 ring-blue-500/40 rounded px-1" : ""}`}
+                    >
                       <span className="text-rose-400">Total (Lowest)</span>
                       <span className="font-semibold text-rose-300">
                         $
                         {(
-                          parseFloat(result.lowest_price?.slice(1) || "0") *
-                          result.amount
+                          parsePrice(result.lowest_price) * result.amount
                         ).toFixed(2)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-1">
+                    <div
+                      className={`flex justify-between items-center py-1 ${sortField === "total_median" ? "ring-1 ring-blue-500/40 rounded px-1" : ""}`}
+                    >
                       <span className="text-blue-400">Total (Median)</span>
                       <span className="font-semibold text-blue-300">
                         $
                         {(
-                          parseFloat(result.median_price?.slice(1) || "0") *
-                          result.amount
+                          parsePrice(result.median_price) * result.amount
                         ).toFixed(2)}
                       </span>
                     </div>
