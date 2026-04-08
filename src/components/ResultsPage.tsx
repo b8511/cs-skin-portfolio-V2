@@ -75,6 +75,9 @@ function ResultsPage({ results, onGoBack, onRetry }: ResultsPageProps) {
   const [sortField, setSortField] = useState<SortField>("total_lowest");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [editNames, setEditNames] = useState<Record<string, string>>({});
+  const [expandedNames, setExpandedNames] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const total = results.length;
   const doneCount = results.filter((r) => !r.loading).length;
@@ -263,8 +266,20 @@ function ResultsPage({ results, onGoBack, onRetry }: ResultsPageProps) {
                     )}
                   </span>
                   <h2
-                    className="text-base font-bold text-white truncate flex-1 min-w-0"
-                    title={result.name}
+                    className={`text-base font-bold text-white flex-1 min-w-0 cursor-pointer select-all hover:text-blue-300 transition-colors ${
+                      expandedNames[result.name] ? "break-all" : "truncate"
+                    }`}
+                    title={
+                      expandedNames[result.name]
+                        ? undefined
+                        : "Click to expand full name"
+                    }
+                    onClick={() =>
+                      setExpandedNames((prev) => ({
+                        ...prev,
+                        [result.name]: !prev[result.name],
+                      }))
+                    }
                   >
                     {result.name}
                   </h2>
@@ -333,18 +348,25 @@ function ResultsPage({ results, onGoBack, onRetry }: ResultsPageProps) {
                           Image not found. Open image URL
                         </a>
                       ) : (
-                        <img
-                          src={imageUrl}
-                          alt={result.name}
-                          className="h-full w-full object-contain"
-                          onError={() =>
-                            setImageErrors((prev) => ({
-                              ...prev,
-                              [result.name]: true,
-                            }))
-                          }
-                          referrerPolicy="no-referrer"
-                        />
+                        <a
+                          href={`https://steamcommunity.com/market/listings/730/${encodeURIComponent(result.name)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-full w-full flex items-center justify-center cursor-pointer"
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={result.name}
+                            className="h-full w-full object-contain"
+                            onError={() =>
+                              setImageErrors((prev) => ({
+                                ...prev,
+                                [result.name]: true,
+                              }))
+                            }
+                            referrerPolicy="no-referrer"
+                          />
+                        </a>
                       )}
                     </div>
                     <div
